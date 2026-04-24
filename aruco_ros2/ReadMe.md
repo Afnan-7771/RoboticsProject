@@ -73,4 +73,4 @@ This project was designed to run on a Raspberry Pi-based robot using ROS2.
 
 ## Report
 A detailed technical report of this project can be found below:
-[Project Report](https://drive.google.com/...)
+[View Project Report](RoboticsReport.pdf)
