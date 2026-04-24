@@ -1,0 +1,76 @@
+# Robot Maze Navigation 
+
+## Overview
+This project was developed during a **Summer School in Robotics** at Örebro University (Sweden).
+
+The objective was to program a robot to navigate through a maze and reach a goal using the shortest possible path. 
+
+The system works as follows: The robot receives visual marker input, builds a map of the environment, computes an optimal path using A*, and executes that path.
+
+The system was built using **ROS 2 (Jazzy)** and combines computer vision, mapping, path planning, and motion control. This project was developed in collaboration with a teammate as part of a robotics assignment.
+
+---
+
+## Key Features
+- ArUco marker detection for robot localisation  
+- Occupancy grid generation from real-world marker data  
+- A* pathfinding algorithm for shortest path computation  
+- Robot movement control using ROS 2 publishers/subscribers  
+- Simulation of path planning before real-world execution  
+
+---
+
+## System Pipeline
+
+The project follows a structured pipeline:
+
+### 1. Grid Creation
+Generate an occupancy map of the maze using detected ArUco markers.
+
+### 2. Marker Mapping
+Subscribe to  `/aruco/markers/transformed` and map detected marker positions onto a grid representation, and then convert pixel coordinates into real-world coordinates.
+
+### 3. Pathfinding
+Compute the shortest path using a custom A* implementation.
+
+### 4. Movement Execution
+Convert the path into robot movement commands.
+
+---
+
+## Project Structure
+- `aruco_detection.py` → detects markers from camera input  
+- `aruco_transform.py` → processes marker positions  
+- `makePath.py` → generates grid simulation including robot robot movement and path planning towards goal position from ArUco markers
+- `follow_path.py` → controls robot movement along a path  
+- `mazePathMovement.py` → navigation logic for maze traversal  
+- `topicPub2.py` / `topicSub.py` → ROS2 communication  
+
+---
+Example of an image genereated by "makePath.py". The blue represents the robot start position and the yellow represents the goal position.
+![alt text](<Screenshot 2026-04-24 103400.png>)
+
+## How to Run
+
+This project was designed to run on a Raspberry Pi-based robot using ROS2.
+
+### Requirements
+- ROS2 installed  
+- Raspberry Pi-based robot (accessed over local network, e.g. via SSH)
+- Camera input  
+
+>Note: Full execution requires the original hardware setup.  
+> However, individual modules (e.g., marker detection and simulation) can be tested independently.
+
+---
+
+## What I Learned
+- Working with ROS 2 nodes, topics, and messaging  
+- Computer vision using ArUco markers  
+- Path planning with A*  
+- Integrating perception, planning, and control in robotics systems  
+- Debugging real-world robotic behavior  
+
+## Report
+A detailed technical report of this project can be found below:
+[Project Report](https://drive.google.com/...)

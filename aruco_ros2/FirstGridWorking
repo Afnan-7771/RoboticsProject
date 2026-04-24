@@ -1,0 +1,100 @@
+import rclpy
+from rclpy.node import Node
+import numpy as np
+import matplotlib.pyplot as plt
+from aruco_interfaces.msg import ArucoMarkers
+
+class ArucoGridDrawer(Node):
+    def __init__(self):
+        super().__init__('aruco_grid_drawer')
+
+        # Grid config
+        self.cell_size = 0.15  # 15 cm
+        self.grid_size = int(8.0 / self.cell_size) + 1  # 53
+        self.grid = np.zeros((self.grid_size, self.grid_size), dtype=int)
+
+        # Subscribe to ArUco tag positions
+        self.subscription = self.create_subscription(
+            ArucoMarkers,
+            '/aruco/transformed',
+            self.aruco_callback,
+            10
+        )
+
+        self.received = False  # Flag to ensure image is saved only once
+
+    def world_to_grid(self, x, y):
+        gx = int((x + 4.0) / self.cell_size)
+        gy = int((y + 4.0) / self.cell_size)
+        return gx, gy
+        
+    def grid_to_world(self, gx, gy):
+        x = gx * self.cell_size - 4.0
+        y = gy * self.cell_size - 4.0
+        return x, y
+
+    def aruco_callback(self, msg):
+        if self.received:
+            return  # Only handle first message
+
+        # Lists to track positions by ID
+        self.tag_positions = []            # Other tags
+        self.special_pink_position = None  # ID 10
+        self.special_red_position = None   # ID 15
+
+        for marker in msg.markers:
+            try:
+                x = marker.pose.position.x
+                y = marker.pose.position.y
+                gx, gy = self.world_to_grid(x, y)
+
+                if 0 <= gx < self.grid_size and 0 <= gy < self.grid_size:
+                    if marker.id == 10:
+                        self.special_pink_position = (gx, gy)
+                    elif marker.id == 15:
+                        self.special_red_position = (gx, gy)
+                    else:
+                        self.tag_positions.append((gx, gy))
+            except Exception as e:
+                self.get_logger().warn(f"Failed to process marker: {e}")
+
+        self.draw_and_save_grid()
+        self.received = True
+        self.get_logger().info("Shutting down node after saving image...")
+        rclpy.shutdown()
+
+    def draw_and_save_grid(self):
+        fig, ax = plt.subplots(figsize=(8, 8))
+        ax.set_title("AR Tags Grid")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.imshow(self.grid, cmap='Greys', origin='lower')
+
+        # Plot generic AR tags as black
+        for gx, gy in self.tag_positions:
+            ax.plot(gx, gy, "ks")  # 'k' = black, 's' = square
+
+        # ID 10: hotpink
+        if self.special_pink_position:
+            px, py = self.special_pink_position
+            ax.plot(px, py, marker="s", color="hotpink", markersize=10, label="ID 10")
+
+        # ID 15: red
+        if self.special_red_position:
+            rx, ry = self.special_red_position
+            ax.plot(rx, ry, marker="s", color="red", markersize=10, label="ID 15")
+
+        ax.legend(loc="upper right")
+        plt.grid(False)
+        plt.savefig("/home/pi/ros2_ws/grid_output.png")
+        plt.close(fig)
+        self.get_logger().info("Saved image to ~/ros2_ws/grid_output.png")
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ArucoGridDrawer()
+    rclpy.spin(node)  # Will stop after first callback
+    node.destroy_node()
+
+if __name__ == '__main__':
+    main()
